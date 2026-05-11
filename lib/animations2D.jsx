@@ -130,11 +130,9 @@ var TFX_2D = (function () {
         pos.setValue([0, 0, 0]);
         try {
             pos.expression =
-                "seed = textIndex;\n" +
-                "seedRandom(seed, true);\n" +
+                "seedRandom(textIndex + Math.floor(time*18), true);\n" +
                 "amp = " + amp + ";\n" +
-                "fr = 18;\n" +
-                "[wiggle(fr, amp, 1, 0.5, time)[0] - position[0], wiggle(fr, amp, 1, 0.5, time+0.13)[1] - position[1], 0]";
+                "[(random()-0.5)*amp, (random()-0.5)*amp, 0]";
         } catch (e) {}
 
         var op = U.addAnimatorProp(anim, "ADBE Text Opacity");

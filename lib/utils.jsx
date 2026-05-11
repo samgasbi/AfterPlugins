@@ -101,15 +101,20 @@ var TFX_UTILS = (function () {
     function configureAdvanced(sel, opts) {
         opts = opts || {};
         var adv = sel.property("ADBE Text Range Advanced");
-        try {
-            if (opts.basedOn !== undefined) adv.property("ADBE Text Range Type2").setValue(opts.basedOn); // 1 char,2 char w/o spaces,3 word,4 line
-            if (opts.shape   !== undefined) adv.property("ADBE Text Selector Shape").setValue(opts.shape); // 1 square,2 ramp up,3 ramp down,4 triangle,5 round,6 smooth
-            if (opts.randomize !== undefined) adv.property("ADBE Text Randomize Order").setValue(opts.randomize ? 1 : 0);
-            if (opts.smoothness !== undefined) adv.property("ADBE Text Selector Smoothness").setValue(opts.smoothness);
-            if (opts.easeHigh !== undefined) adv.property("ADBE Text Range Ease High").setValue(opts.easeHigh);
-            if (opts.easeLow  !== undefined) adv.property("ADBE Text Range Ease Low").setValue(opts.easeLow);
-            if (opts.mode !== undefined) adv.property("ADBE Text Selector Mode").setValue(opts.mode);
-        } catch (e) {}
+        if (!adv) return;
+        function trySet(matchName, value) {
+            try {
+                var p = adv.property(matchName);
+                if (p) p.setValue(value);
+            } catch (e) {}
+        }
+        if (opts.basedOn   !== undefined) trySet("ADBE Text Range Type2", opts.basedOn);          // 1 char,2 char w/o spaces,3 word,4 line
+        if (opts.shape     !== undefined) trySet("ADBE Text Selector Shape", opts.shape);          // 1 square,2 ramp up,3 ramp down,4 triangle,5 round,6 smooth
+        if (opts.randomize !== undefined) trySet("ADBE Text Randomize Order", opts.randomize ? 1 : 0);
+        if (opts.smoothness !== undefined) trySet("ADBE Text Range Smoothness", opts.smoothness);
+        if (opts.easeHigh  !== undefined) trySet("ADBE Text Range Ease High", opts.easeHigh);
+        if (opts.easeLow   !== undefined) trySet("ADBE Text Range Ease Low",  opts.easeLow);
+        if (opts.mode      !== undefined) trySet("ADBE Text Selector Mode",   opts.mode);
     }
 
     // Make text layer 3D enabled

@@ -11,20 +11,38 @@ var TFX_STROKE = (function () {
 
     // Convert a text layer to shape layer via menu command. Returns the shape layer.
     function createShapesFromText(comp, textLayer) {
-        var prevIndex = comp.numLayers;
-        textLayer.selected = true;
-        // Run "Create Shapes from Text" — this hides the text layer and creates a shape layer above
-        try {
-            var id = app.findMenuCommandId("Create Shapes from Text");
-            if (id) app.executeCommand(id);
-        } catch (e) {
-            alert("Could not run 'Create Shapes from Text'. Make sure a text layer is selected.");
-            return null;
-        }
-        // Find the new shape layer (it appears just above the text)
+        // Snapshot existing shape layers by object identity (indices shift after insertion)
+        var beforeList = [];
         for (var i = 1; i <= comp.numLayers; i++) {
             var L = comp.layer(i);
-            if (L instanceof ShapeLayer && L.name.indexOf(textLayer.name) !== -1) return L;
+            if (L instanceof ShapeLayer) beforeList.push(L);
+        }
+        function wasBefore(layer) {
+            for (var b = 0; b < beforeList.length; b++) if (beforeList[b] === layer) return true;
+            return false;
+        }
+
+        // Deselect everything else; select only this text layer
+        for (var j = 1; j <= comp.numLayers; j++) comp.layer(j).selected = false;
+        textLayer.selected = true;
+
+        try {
+            var id = app.findMenuCommandId("Create Shapes from Text");
+            if (!id) {
+                alert("AfterPlugins TextFX:\n'Create Shapes from Text' menu command not found.\n" +
+                      "Stroke/Spline presets require this command (English AE menus).");
+                return null;
+            }
+            app.executeCommand(id);
+        } catch (e) {
+            alert("AfterPlugins TextFX:\nCould not run 'Create Shapes from Text'.\n" + e.toString());
+            return null;
+        }
+
+        // Find the new shape layer (the one not in our snapshot)
+        for (var k = 1; k <= comp.numLayers; k++) {
+            var N = comp.layer(k);
+            if (N instanceof ShapeLayer && !wasBefore(N)) return N;
         }
         return null;
     }
