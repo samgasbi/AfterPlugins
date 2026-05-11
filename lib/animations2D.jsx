@@ -202,15 +202,63 @@ var TFX_2D = (function () {
         U.animateRange(anim, t0, dur);
     }
 
+    function matrixRain(comp, layer, opts) {
+        var dur = opts.duration || 1.6;
+        var t0  = opts.startTime;
+        var fontSize = U.getFontSize(layer);
+
+        var anim = U.addAnimator(layer, "TFX Matrix Rain");
+        var sel  = U.addRangeSelector(anim);
+        U.configureAdvanced(sel, { basedOn: 1, shape: 6, randomize: true });
+
+        var pos = U.addAnimatorProp(anim, "ADBE Text Position 3D");
+        pos.setValue([0, -fontSize * 2.5, 0]);
+        var op  = U.addAnimatorProp(anim, "ADBE Text Opacity");
+        op.setValue(0);
+        var blur = U.addAnimatorProp(anim, "ADBE Text Blur");
+        blur.setValue([0, 25]);
+
+        U.animateRange(anim, t0, dur);
+    }
+
+    function elasticPop(comp, layer, opts) {
+        var dur = opts.duration || 1.2;
+        var t0  = opts.startTime;
+
+        var anim = U.addAnimator(layer, "TFX Elastic Pop");
+        var sel  = U.addRangeSelector(anim);
+        U.configureAdvanced(sel, { basedOn: 1, shape: 6, smoothness: 100 });
+
+        var sc = U.addAnimatorProp(anim, "ADBE Text Scale");
+        sc.setValue([0, 0, 100]);
+        var op = U.addAnimatorProp(anim, "ADBE Text Opacity");
+        op.setValue(0);
+
+        var sel1 = U.animateRange(anim, t0, dur);
+        // Elastic decay on the range start
+        try {
+            var st = sel1.property("ADBE Text Percent Start");
+            st.expression =
+                "amp = 0.12; freq = 2.2; decay = 3.0;\n" +
+                "n = 0;\n" +
+                "if (numKeys > 0) n = nearestKey(time).index;\n" +
+                "if (key(n).time > time) n--;\n" +
+                "if (n == 0) value\n" +
+                "else { t = time - key(n).time; value + amp*Math.sin(freq*t*2*Math.PI)/Math.exp(decay*t)*100; }";
+        } catch (e) {}
+    }
+
     return {
         typewriter:     { name: "Typewriter",      run: typewriter },
         slideInBottom:  { name: "Slide In Bottom", run: slideInBottom },
         fadeInWord:     { name: "Fade In (Word)",  run: fadeInWord },
         scaleBounce:    { name: "Scale Bounce",    run: scaleBounce },
+        elasticPop:     { name: "Elastic Pop",     run: elasticPop },
         wave:           { name: "Wave",            run: wave },
         glitchIn:       { name: "Glitch In",       run: glitchIn },
         blurReveal:     { name: "Blur Reveal",     run: blurReveal },
         trackingExpand: { name: "Tracking Expand", run: trackingExpand },
-        rotateIn:       { name: "Rotate In",       run: rotateIn }
+        rotateIn:       { name: "Rotate In",       run: rotateIn },
+        matrixRain:     { name: "Matrix Rain",     run: matrixRain }
     };
 })();

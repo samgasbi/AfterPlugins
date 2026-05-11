@@ -8,11 +8,16 @@ trigger one of 30+ presets across five categories.
 
 | Tab            | What it does                                                                 |
 | -------------- | ---------------------------------------------------------------------------- |
-| **2D**         | Typewriter, Slide In, Fade Word, Scale Bounce, Wave, Glitch In, Blur Reveal, Tracking Expand, Rotate In |
-| **3D**         | 3D Flip Reveal, Spin Y, Tumble, Depth Fly-In, Cube Unfold, Orbit In          |
+| **2D**         | Typewriter, Slide In, Fade Word, Scale Bounce, Elastic Pop, Wave, Glitch In, Blur Reveal, Tracking Expand, Rotate In, Matrix Rain |
+| **3D**         | 3D Flip Reveal, Spin Y, Tumble, Depth Fly-In, Cube Unfold, Orbit In, Shutter, Domino Fall |
 | **Logo**       | Cinematic Reveal, 3D Cascade, Stamp Impact, HUD Reveal, Energy Burst         |
-| **Stroke/Spline** | Stroke Write-On, Stroke Reveal → Fill, Spline Unveil, Neon Outline, Dual Stroke |
+| **Stroke/Spline** | Stroke Write-On, Stroke Reveal → Fill, Spline Unveil, Stroke Retract, Neon Outline, Dual Stroke, Dashed Signature |
 | **Color**      | Gradient Sweep, Hue Cycle, Neon Glow, Chromatic Aberration, Rainbow Per Char, Color Flash In |
+
+### Utility actions
+
+- **Remove TextFX from selected** — removes every TFX animator, the effects this plugin adds (Glow, Box Blur, Posterize Time, CC RGB Splitter), and clears transform-property keyframes/expressions on the selected text layers. Safe cleanup without relying on Undo.
+- **Bake at current time** — finds the earliest TFX keyframe on the selected layers and shifts all TFX keys so the animation starts at the current playhead time. Useful for retiming after the fact.
 
 ## Install
 

@@ -185,6 +185,31 @@
         buildPresetTab(tabSpline,TFX_STROKE);
         buildPresetTab(tabColor, TFX_COLOR);
 
+        // Utility row
+        var util = pal.add("group");
+        util.orientation = "row";
+        util.alignChildren = ["fill","center"];
+        var clearBtn = util.add("button", undefined, "Remove TextFX from selected");
+        clearBtn.helpTip = "Removes all TextFX animators, keyframes, and effects from the selected text layers.";
+        clearBtn.onClick = function () {
+            var ctx = TFX_UTILS.requireTextLayers();
+            if (!ctx) return;
+            TFX_UTILS.undoGroup("TextFX: Cleanup", function () {
+                TFX_UTILS.eachLayer(ctx.layers, function (L) { TFX_UTILS.removeTFXFromLayer(L); });
+            });
+        };
+        var rescaleBtn = util.add("button", undefined, "Bake at current time");
+        rescaleBtn.helpTip = "Moves the TextFX timing so the animation starts at the current playhead time.";
+        rescaleBtn.onClick = function () {
+            var ctx = TFX_UTILS.requireTextLayers();
+            if (!ctx) return;
+            TFX_UTILS.undoGroup("TextFX: Bake at time", function () {
+                TFX_UTILS.eachLayer(ctx.layers, function (L) {
+                    TFX_UTILS.shiftTFXKeyframes(L, ctx.comp.time);
+                });
+            });
+        };
+
         // Footer
         var foot = pal.add("group");
         foot.orientation = "row";
@@ -199,10 +224,12 @@
                 "3) Click any preset.\n\n" +
                 "• Stroke / Spline presets convert text to shapes (a new shape layer is created).\n" +
                 "• 3D presets enable 3D on the layer automatically.\n" +
+                "• 'Remove TextFX' wipes all TFX animators, keyframes, and effects from selection.\n" +
+                "• 'Bake at current time' shifts the animation start to the current time.\n" +
                 "• Everything is wrapped in a single Undo step."
             );
         };
-        var ver = foot.add("statictext", undefined, "v1.0 — AfterPlugins");
+        var ver = foot.add("statictext", undefined, "v1.1 — AfterPlugins");
         ver.alignment = ["right","center"];
 
         pal.layout.layout(true);
@@ -217,11 +244,21 @@
     }
 
     // ---- Color picker helpers ------------------------------------------------
+    // Use an iconbutton with an onDraw callback — most reliable way to render
+    // a solid color swatch in ScriptUI across Win/Mac and AE versions.
     function paintColorButton(btn) {
         try {
             var c = btn._color;
+            // backgroundColor approach (often ignored on buttons, but harmless)
             btn.graphics.backgroundColor = btn.graphics.newBrush(btn.graphics.BrushType.SOLID_COLOR, [c[0], c[1], c[2], 1]);
+            // Label fallback: show hex so the swatch is always meaningful
+            btn.text = rgbToHexString(btn._color);
         } catch (e) {}
+        try { btn.notify("onDraw"); } catch (e) {}
+    }
+    function rgbToHexString(c) {
+        function h(v) { v = Math.round(v*255); var s = v.toString(16); return s.length < 2 ? "0"+s : s; }
+        return "#" + h(c[0]) + h(c[1]) + h(c[2]);
     }
     function pickColor(btn) {
         try {

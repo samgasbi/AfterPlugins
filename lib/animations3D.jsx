@@ -144,12 +144,52 @@ var TFX_3D = (function () {
         U.animateRange(anim, t0, dur);
     }
 
+    function shutterReveal(comp, layer, opts) {
+        var dur = opts.duration || 1.3;
+        var t0  = opts.startTime;
+
+        enablePerChar3D(layer);
+
+        var anim = U.addAnimator(layer, "TFX 3D Shutter");
+        var sel  = U.addRangeSelector(anim);
+        U.configureAdvanced(sel, { basedOn: 1, shape: 1 });
+
+        var rx = U.addAnimatorProp(anim, "ADBE Text Rotation X");
+        rx.setValue(-110);
+        var op = U.addAnimatorProp(anim, "ADBE Text Opacity"); op.setValue(0);
+        var sk = U.addAnimatorProp(anim, "ADBE Text Skew");    sk.setValue(40);
+
+        U.animateRange(anim, t0, dur);
+    }
+
+    function dominoFall(comp, layer, opts) {
+        var dur = opts.duration || 1.8;
+        var t0  = opts.startTime;
+        var fontSize = U.getFontSize(layer);
+
+        enablePerChar3D(layer);
+
+        var anim = U.addAnimator(layer, "TFX 3D Domino");
+        var sel  = U.addRangeSelector(anim);
+        U.configureAdvanced(sel, { basedOn: 1, shape: 6, easeHigh: 60 });
+
+        var rz = U.addAnimatorProp(anim, "ADBE Text Rotation"); rz.setValue(85);
+        var rx = U.addAnimatorProp(anim, "ADBE Text Rotation X"); rx.setValue(20);
+        var anch = U.addAnimatorProp(anim, "ADBE Text Anchor Point 3D");
+        anch.setValue([0, fontSize*0.5, 0]);
+        var op = U.addAnimatorProp(anim, "ADBE Text Opacity"); op.setValue(0);
+
+        U.animateRange(anim, t0, dur);
+    }
+
     return {
-        flipReveal:  { name: "3D Flip Reveal",   run: flipReveal },
-        spinY:       { name: "3D Spin Y",        run: spinY },
-        tumble:      { name: "3D Tumble",        run: tumble },
-        depthFlyIn:  { name: "3D Depth Fly-In",  run: depthFlyIn },
-        cubeUnfold:  { name: "3D Cube Unfold",   run: cubeUnfold },
-        orbitIn:     { name: "3D Orbit In",      run: orbitIn }
+        flipReveal:    { name: "3D Flip Reveal",   run: flipReveal },
+        spinY:         { name: "3D Spin Y",        run: spinY },
+        tumble:        { name: "3D Tumble",        run: tumble },
+        depthFlyIn:    { name: "3D Depth Fly-In",  run: depthFlyIn },
+        cubeUnfold:    { name: "3D Cube Unfold",   run: cubeUnfold },
+        orbitIn:       { name: "3D Orbit In",      run: orbitIn },
+        shutterReveal: { name: "3D Shutter",       run: shutterReveal },
+        dominoFall:    { name: "3D Domino Fall",   run: dominoFall }
     };
 })();

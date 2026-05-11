@@ -216,11 +216,78 @@ var TFX_STROKE = (function () {
         shape.name = layer.name + " — TFX Dual Stroke";
     }
 
+    // Reverse stroke — fully drawn, retracts to nothing (unveil-from-end)
+    function strokeRetract(comp, layer, opts) {
+        var dur = opts.duration || 2.0;
+        var t0  = opts.startTime;
+        var color = opts.color || [1,1,1,1];
+
+        var shape = createShapesFromText(comp, layer);
+        if (!shape) return;
+        strokifyShapes(shape, opts.strokeWidth || 4, color);
+
+        var contents = shape.property("ADBE Root Vectors Group");
+        for (var i = 1; i <= contents.numProperties; i++) {
+            var g = contents.property(i);
+            if (g.matchName !== "ADBE Vector Group") continue;
+            var gc = g.property("ADBE Vectors Group");
+            var trim = gc.addProperty("ADBE Vector Filter - Trim");
+            var s = trim.property("ADBE Vector Trim Start");
+            s.setValueAtTime(t0,         0);
+            s.setValueAtTime(t0 + dur,   100);
+            U.smoothKeys(s);
+        }
+        shape.name = layer.name + " — TFX Stroke Retract";
+    }
+
+    // Dashed signature: stroke with dashes draws on like a fancy signature
+    function dashedSignature(comp, layer, opts) {
+        var dur = opts.duration || 3.0;
+        var t0  = opts.startTime;
+        var color = opts.color || [1,1,1,1];
+
+        var shape = createShapesFromText(comp, layer);
+        if (!shape) return;
+        strokifyShapes(shape, opts.strokeWidth || 5, color);
+
+        var contents = shape.property("ADBE Root Vectors Group");
+        for (var i = 1; i <= contents.numProperties; i++) {
+            var g = contents.property(i);
+            if (g.matchName !== "ADBE Vector Group") continue;
+            var gc = g.property("ADBE Vectors Group");
+            // Find stroke and add dashes
+            for (var s = 1; s <= gc.numProperties; s++) {
+                var sp = gc.property(s);
+                if (sp.matchName === "ADBE Vector Graphic - Stroke") {
+                    try {
+                        var dashes = sp.property("ADBE Vector Stroke Dashes");
+                        var d = dashes.addProperty("ADBE Vector Stroke Dash 1");
+                        d.setValue(8);
+                        var gap = dashes.addProperty("ADBE Vector Stroke Gap 1");
+                        gap.setValue(4);
+                    } catch (e) {}
+                    try {
+                        sp.property("ADBE Vector Stroke Line Cap").setValue(2);  // round
+                        sp.property("ADBE Vector Stroke Line Join").setValue(2); // round
+                    } catch (e2) {}
+                }
+            }
+            var trim = gc.addProperty("ADBE Vector Filter - Trim");
+            var endP = trim.property("ADBE Vector Trim End");
+            endP.setValueAtTime(t0,        0);
+            endP.setValueAtTime(t0 + dur,  100);
+            U.smoothKeys(endP);
+        }
+        shape.name = layer.name + " — TFX Dashed Signature";
+    }
+
     return {
         strokeWriteOn:        { name: "Stroke Write-On",        run: strokeWriteOn,        needsColor: true },
         strokeRevealThenFill: { name: "Stroke Reveal → Fill",  run: strokeRevealThenFill, needsColor: true },
         splineUnveil:         { name: "Spline Unveil",          run: splineUnveil,         needsColor: true },
+        strokeRetract:        { name: "Stroke Retract",         run: strokeRetract,        needsColor: true },
         neonOutline:          { name: "Neon Outline",           run: neonOutline,          needsColor: true },
-        dualStroke:           { name: "Dual Stroke",            run: dualStroke,           needsColor: true }
+        dualStroke:           { name: "Dual Stroke",            run: dualStroke,           needsColor: true },
+        dashedSignature:      { name: "Dashed Signature",       run: dashedSignature,      needsColor: true }
     };
 })();

@@ -160,6 +160,89 @@ var TFX_UTILS = (function () {
         return (t < 0 || t > comp.duration) ? 0 : t;
     }
 
+    // Remove every animator whose name starts with "TFX", remove TFX-named
+    // effects from the layer's effect parade, and clear any transform keyframes
+    // we likely added (Position/Scale/Opacity).
+    function removeTFXFromLayer(layer) {
+        try {
+            var animators = layer.property("ADBE Text Properties").property("ADBE Text Animators");
+            for (var i = animators.numProperties; i >= 1; i--) {
+                var a = animators.property(i);
+                if (a && a.name && a.name.indexOf("TFX") === 0) a.remove();
+            }
+        } catch (e) {}
+        try {
+            var fx = layer.property("ADBE Effect Parade");
+            for (var j = fx.numProperties; j >= 1; j--) {
+                var ef = fx.property(j);
+                if (!ef) continue;
+                // Remove well-known effects we add. We tag by name where we can.
+                var n = ef.name || "";
+                var m = ef.matchName || "";
+                if (
+                    m === "ADBE Glo2" ||
+                    m === "ADBE Box Blur2" ||
+                    m === "ADBE Fast Blur" ||
+                    m === "ADBE Posterize Time" ||
+                    m === "CC RGB Splitter" ||
+                    n.indexOf("TFX") !== -1
+                ) ef.remove();
+            }
+        } catch (e) {}
+        // Clear keyframes on common transform props
+        try {
+            var t = layer.property("ADBE Transform Group");
+            var props = ["ADBE Position", "ADBE Scale", "ADBE Opacity", "ADBE Rotate Z"];
+            for (var k = 0; k < props.length; k++) {
+                var p = t.property(props[k]);
+                if (!p) continue;
+                while (p.numKeys > 0) p.removeKey(1);
+                try { if (p.expressionEnabled) p.expression = ""; } catch (ee) {}
+            }
+        } catch (e) {}
+    }
+
+    // Shift all keyframes on TFX animators so the earliest key aligns to `target` time.
+    function shiftTFXKeyframes(layer, target) {
+        var earliest = Infinity;
+        var keyedProps = [];
+
+        function visit(prop) {
+            try {
+                if (prop.numProperties !== undefined) {
+                    for (var i = 1; i <= prop.numProperties; i++) visit(prop.property(i));
+                    return;
+                }
+                if (prop.numKeys && prop.numKeys > 0) {
+                    keyedProps.push(prop);
+                    var t0 = prop.keyTime(1);
+                    if (t0 < earliest) earliest = t0;
+                }
+            } catch (e) {}
+        }
+        try {
+            var animators = layer.property("ADBE Text Properties").property("ADBE Text Animators");
+            for (var i = 1; i <= animators.numProperties; i++) {
+                var a = animators.property(i);
+                if (a && a.name && a.name.indexOf("TFX") === 0) visit(a);
+            }
+        } catch (e) {}
+
+        if (earliest === Infinity) return;
+        var delta = target - earliest;
+        if (Math.abs(delta) < 1e-6) return;
+
+        for (var k = 0; k < keyedProps.length; k++) {
+            var p = keyedProps[k];
+            // Shift in reverse to avoid index collisions
+            var pairs = [];
+            for (var n = 1; n <= p.numKeys; n++) pairs.push({ t: p.keyTime(n), v: p.keyValue(n) });
+            while (p.numKeys > 0) p.removeKey(1);
+            for (var m = 0; m < pairs.length; m++) p.setValueAtTime(pairs[m].t + delta, pairs[m].v);
+            smoothKeys(p);
+        }
+    }
+
     return {
         activeComp: activeComp,
         selectedTextLayers: selectedTextLayers,
@@ -177,6 +260,8 @@ var TFX_UTILS = (function () {
         hexToRGB: hexToRGB,
         eachLayer: eachLayer,
         undoGroup: undoGroup,
-        getStart: getStart
+        getStart: getStart,
+        removeTFXFromLayer: removeTFXFromLayer,
+        shiftTFXKeyframes: shiftTFXKeyframes
     };
 })();
